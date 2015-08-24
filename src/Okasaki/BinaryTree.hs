@@ -132,3 +132,15 @@ instance Ord a => Set LeastCopyCacheCandidate a where
             | otherwise = fmap (updateRight s) $ insert' x (Just y) b
 
   member x (LCCC s) = member x s
+
+-- | Exercise 2.5 (a)
+--
+-- >>> complete 3 0
+-- E
+--
+-- >>> complete 5 3
+-- T (T (T E 5 E) 5 (T E 5 E)) 5 (T (T E 5 E) 5 (T E 5 E))
+complete :: Ord a => a -> Int -> UnbalancedSet a
+complete x d
+  | d <= 0    = E
+  | otherwise = let c = complete x (d - 1) in T c x c
