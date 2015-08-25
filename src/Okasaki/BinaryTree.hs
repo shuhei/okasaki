@@ -134,13 +134,39 @@ instance Ord a => Set LeastCopyCacheCandidate a where
   member x (LCCC s) = member x s
 
 -- | Exercise 2.5 (a)
+-- Create a balanced tree of a given depth.
 --
 -- >>> complete 3 0
 -- E
 --
 -- >>> complete 5 3
 -- T (T (T E 5 E) 5 (T E 5 E)) 5 (T (T E 5 E) 5 (T E 5 E))
-complete :: Ord a => a -> Int -> UnbalancedSet a
+complete :: Ord a => a -> Word -> UnbalancedSet a
 complete x d
-  | d <= 0    = E
+  | d == 0    = E
   | otherwise = let c = complete x (d - 1) in T c x c
+
+-- | Exercise 2.5 (b)
+-- Create a balanced tree of a given size.
+--
+-- >>> create 2 0
+-- E
+--
+-- >>> create 2 1
+-- T E 2 E
+--
+-- >>> create 2 2
+-- T (T E 2 E) 2 E
+--
+-- >>> create 2 3
+-- T (T E 2 E) 2 (T E 2 E)
+--
+-- >>> create 2 4
+-- T (T (T E 2 E) 2 E) 2 (T E 2 E)
+create :: Ord a => a -> Word -> UnbalancedSet a
+create x = fst . create2
+  -- You can share subtrees even if you cannot share the whole tree!
+  where create2 m
+          | m == 0         = (E, T E x E)
+          | m `mod` 2 == 1 = let (t0, t1) = create2 ((m - 1) `div` 2) in (T t0 x t0, T t1 x t0)
+          | otherwise      = let (t0, t1) = create2 (m `div` 2 - 1) in (T t1 x t0, T t1 x t1)
