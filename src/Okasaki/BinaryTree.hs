@@ -3,10 +3,23 @@
 -- 2.2 Binary Search Trees
 module Okasaki.BinaryUnbalancedSet where
 
+import Prelude hiding (lookup, mempty)
+
 class Set s a where
   empty :: s a
   insert :: a -> s a -> s a
   member :: a -> s a -> Bool
+
+data UnbalancedSet a
+  = E
+  | T (UnbalancedSet a) a (UnbalancedSet a)
+  deriving (Show)
+
+updateLeft :: UnbalancedSet a -> UnbalancedSet a -> UnbalancedSet a
+updateLeft (T a y b) x = T x y b
+
+updateRight :: UnbalancedSet a -> UnbalancedSet a -> UnbalancedSet a
+updateRight (T a y b) x = T a y x
 
 -- |
 -- >>> empty :: UnbalancedSet Int
@@ -26,17 +39,6 @@ class Set s a where
 --
 -- >>> member 5 (T (T E 3 E) 8 E)
 -- False
-data UnbalancedSet a
-  = E
-  | T (UnbalancedSet a) a (UnbalancedSet a)
-  deriving (Show)
-
-updateLeft :: UnbalancedSet a -> UnbalancedSet a -> UnbalancedSet a
-updateLeft (T a y b) x = T x y b
-
-updateRight :: UnbalancedSet a -> UnbalancedSet a -> UnbalancedSet a
-updateRight (T a y b) x = T a y x
-
 instance Ord a => Set UnbalancedSet a where
   empty = E
 
@@ -170,3 +172,40 @@ create x = fst . create2
           | m == 0         = (E, T E x E)
           | m `mod` 2 == 1 = let (t0, t1) = create2 ((m - 1) `div` 2) in (T t0 x t0, T t1 x t0)
           | otherwise      = let (t0, t1) = create2 (m `div` 2 - 1) in (T t1 x t0, T t1 x t1)
+
+-- | Exercise 2.6
+class FiniteMap m k a where
+  mempty :: m k a
+  bind :: k -> a -> m k a -> m k a
+  lookup :: k -> m k a -> Maybe a
+
+data UnbalancedMap k a
+  = EM
+  | TM (UnbalancedMap k a) k a (UnbalancedMap k a)
+  deriving (Show)
+
+-- | Exercise 2.6
+--
+-- >>> mempty :: UnbalancedMap Word String
+-- EM
+--
+-- >>> let kvs = [("foo", 123), ("bar", 234), ("baz", 345)]
+-- >>> let mm = foldr (\(k, v) m -> bind k v m) mempty kvs :: UnbalancedMap String Int
+-- >>> lookup "bar" mm
+-- Just 234
+-- >>> lookup "hello" mm
+-- Nothing
+instance (Ord k, Show k, Show a) => FiniteMap UnbalancedMap k a where
+  mempty = EM
+
+  bind k v EM = TM EM k v EM
+  bind k v s@(TM a kk vv b)
+    | k < kk     = TM (bind k v a) kk vv b
+    | k > kk     = TM a kk vv (bind k v b)
+    | otherwise = s
+
+  lookup _ EM = Nothing
+  lookup x (TM l y v r)
+    | x < y     = lookup x l
+    | x > y     = lookup x r
+    | otherwise = Just v
