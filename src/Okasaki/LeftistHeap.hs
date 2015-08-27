@@ -53,3 +53,7 @@ instance (Ord a) => Heap LeftistHeap a where
 
   deleteMin E = Nothing
   deleteMin (T _ _ a b) = Just (merge a b)
+
+-- Exercise 3.1
+-- Given a hash with n nodes, the right spine is longest when other paths are shortest. From the leftist propertty, the right spine is the shortest in a hash. Thus, the right spine has most elements when the heap is balanced.
+-- For a hash with n nodes and the right spine of l elements, n >= 2 ^ l - 1. And that implies l <= log (n + 1).
