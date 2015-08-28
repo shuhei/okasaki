@@ -16,6 +16,7 @@ class Heap h a where
 data LeftistHeap a
   = E
   | T Word a (LeftistHeap a) (LeftistHeap a)
+  deriving (Show, Eq)
 
 rank E = 0
 rank (T r _ _ _) = r
@@ -57,3 +58,24 @@ instance (Ord a) => Heap LeftistHeap a where
 -- Exercise 3.1
 -- Given a hash with n nodes, the right spine is longest when other paths are shortest. From the leftist propertty, the right spine is the shortest in a hash. Thus, the right spine has most elements when the heap is balanced.
 -- For a hash with n nodes and the right spine of l elements, n >= 2 ^ l - 1. And that implies l <= log (n + 1).
+
+-- | Exercise 3.2
+--
+-- >>> let dih = insert 8 $ insert 4 $ insert 5 $ insert 3 empty :: DirectInsert Int
+-- >>> let h = insert 8 $ insert 4 $ insert 5 $ insert 3 empty :: LeftistHeap Int
+-- >>> DI h == dih
+-- True
+newtype DirectInsert a = DI (LeftistHeap a) deriving (Show, Eq)
+
+instance (Ord a) => Heap DirectInsert a where
+  empty = DI empty
+  isEmpty (DI h) = isEmpty h
+  merge (DI h1) (DI h2) = DI $ merge h1 h2
+  findMin (DI h) = findMin h
+  deleteMin (DI h) = fmap DI $ deleteMin h
+
+  insert x (DI h) = DI $ insert' x h
+    where insert' x E = T 1 x E E
+          insert' x h@(T r y a b)
+            | x <= y    = makeT x E h
+            | otherwise = makeT y a $ insert' x b
